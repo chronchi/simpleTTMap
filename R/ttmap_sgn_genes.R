@@ -98,11 +98,18 @@ ttmap_sgn_genes <- function(ttmap_part2_gtlmap,
             # are zero. 
     
             list_of_genes <- rownames(A)
-            
-            sublist_of_results <- lapply(t_results$Gene, function(ch) grep(paste(list_of_genes, collapse = "|"), ch))
-            sublist_of_results <- sapply(sublist_of_results, function(x) length(x) > 0)
+            sublist_of_results <- c()
+            for (gene in t_results$Gene){
+                result_gene = FALSE
+                for (sub_gene in list_of_genes) {
+                    if (sub_gene == gene){
+                        result_gene = TRUE
+                        break
+                    }
+                }
+                sublist_of_results <- c(sublist_of_results, result_gene)
+            }
             sub_t_results = t_results[sublist_of_results,] 
-            
             # append the p value and adjusted p value columns to the original
             # dataframe
             A <- cbind('adj_p_value'=sub_t_results$adj.P.Val, A)
