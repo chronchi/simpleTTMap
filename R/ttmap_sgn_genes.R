@@ -42,14 +42,21 @@ ttmap_sgn_genes <- function(ttmap_part2_gtlmap,
                             c, 
                             n = 2, 
                             a = 0, 
-                            filename = "TEST2",
+                            filename = "ttmap",
                             annot = ttmap_part1_ctrl_adj$tag.pcl, 
                             col = "NAME",
                             output_directory = ".", 
                             Relaxed = 1) {
 
+    # calculate the p values for all genes in all samples
+    deviation_components <- ttmap_part1_hda$Dc.Dmat  
+    
+    t_tests <- apply(as.matrix(deviation_components), 1, t.test)  
+            
+    t_results <- create_dataframe(t_tests)
+
     # create subdirectories to save the significant genes
-    sub_directories = c("all", "mid1", "mid2", "high", "low")
+    sub_directories <- c("all", "mid1", "mid2", "high", "low")
     for (sub_dir in sub_directories) {
         dir.create( file.path( output_directory, sub_dir ), recursive = TRUE)     
     } 
@@ -89,15 +96,17 @@ ttmap_sgn_genes <- function(ttmap_part2_gtlmap,
             # the null hypothesis is that the genes don't deviate 
             # from the control group, i.e., their deviation components
             # are zero. 
+    
+            list_of_genes <- rownames(A)
             
-            #t_tests <- apply(as.matrix(A), 1, t.test)  
+            sublist_of_results <- lapply(t_results$Gene, function(ch) grep(paste(list_of_genes, collapse = "|"), ch))
+            sublist_of_results <- sapply(sublist_of_results, function(x) length(x) > 0)
+            sub_t_results = t_results[sublist_of_results,] 
             
-            #t_results <- create_dataframe(t_tests)
-
             # append the p value and adjusted p value columns to the original
             # dataframe
-            #A <- cbind('adj_p_value'=t_results$adj.P.Val, A)
-            #A <- cbind('p-value'=t_results$P.Value, A)
+            A <- cbind('adj_p_value'=sub_t_results$adj.P.Val, A)
+            A <- cbind('p_value'=sub_t_results$P.Value, A)
             
             tier_strip = str_remove(tier, '_.*')
             
