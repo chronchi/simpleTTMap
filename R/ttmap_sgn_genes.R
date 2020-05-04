@@ -1,39 +1,51 @@
 # extract pvalues from the dataframe. the default key is p.value
 extract_pvalues <- function(dataframe){
-  # extract keys
-  df_names <- names(dataframe)
-  # create empty array
-  pvalues <- c()
-  tvalues <- c()
-  # iterate over keys to extract pvalues
-  for (n in df_names){
-    pvalues <- c(pvalues, dataframe[[n]]$p.value)
-    tvalues <- c(tvalues, dataframe[[n]]$statistic)
-  }
-  stats_ <- list(pvalues, tvalues)
-  return(stats_)
+    # extract keys
+    df_names <- names(dataframe)
+    # create empty array
+    pvalues <- c()
+    tvalues <- c()
+    # iterate over keys to extract pvalues
+    for (n in df_names){
+        if (length(dataframe[[n]]) == 1){
+            pvalues <- c(pvalues, 1)
+            tvalues <- c(tvalues, 0)
+        }
+        else{
+            pvalues <- c(pvalues, dataframe[[n]]$p.value)
+            tvalues <- c(tvalues, dataframe[[n]]$statistic)
+        }
+    }
+    stats_ <- list(pvalues, tvalues)
+    return(stats_)
 }
 
 # create dataframe containing p.values mean deviation component, 
 # adjusted p-values and gene names. The input is a table wit t.test results
 create_dataframe <- function(ttest_results){
-  # first extract p-values
-  stats_ <- extract_pvalues(ttest_results)
-  # adjust pvalues
-  adjus_pvalues <- p.adjust(stats_[[1]], method='BH')
-  # create final dataframe with gene name, deviation component, p-value and 
-  # adjusted p-value
-  genes <- names(ttest_results)
-  mean_dev_com <- c()
-  for(n in genes){
-    mean_dev_com <- c(mean_dev_com, as.numeric(ttest_results[[n]]$estimate))
-  }
-  final_dataframe = data.frame(Gene=genes, 
-                               logFC = mean_dev_com,
-                               t = stats_[[2]],
-                               P.Value = stats_[[1]],
-                               adj.P.Val = adjus_pvalues)
-  return(final_dataframe)
+    # first extract p-values
+    stats_ <- extract_pvalues(ttest_results)
+    # adjust pvalues
+    adjus_pvalues <- p.adjust(stats_[[1]], method='BH')
+    # create final dataframe with gene name, deviation component, p-value and 
+    # adjusted p-value
+    genes <- names(ttest_results)
+    mean_dev_com <- c()
+    for(n in genes){
+        if (length(ttest_results[[n]]) == 1){
+            estimate <- ttest_results[[n]][[1]]
+        }
+        else {
+            estimate <- ttest_results[[n]]$estimate
+        }
+        mean_dev_com <- c(mean_dev_com, as.numeric(estimate))
+    }
+    final_dataframe = data.frame(Gene=genes, 
+                                 logFC = mean_dev_com,
+                                 t = stats_[[2]],
+                                 P.Value = stats_[[1]],
+                                 adj.P.Val = adjus_pvalues)
+    return(final_dataframe)
 }
 
 ttmap_sgn_genes <- function(ttmap_part2_gtlmap, 
@@ -51,7 +63,16 @@ ttmap_sgn_genes <- function(ttmap_part2_gtlmap,
     # calculate the p values for all genes in all samples
     deviation_components <- ttmap_part1_hda$Dc.Dmat  
     
-    t_tests <- apply(as.matrix(deviation_components), 1, t.test)  
+    t_tests <- apply(as.matrix(deviation_components), 1, 
+                        function(x){
+                            if(length(unique(x)) == 1){
+                                return(unique(x))
+                            }
+                            else{
+                                return(t.test(x))
+                            }
+                        }
+                    ) 
             
     t_results <- create_dataframe(t_tests)
 

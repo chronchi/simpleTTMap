@@ -1,4 +1,5 @@
-ttmap <- function(ttmap_part1_hda, m1,
+ttmap <- function(ttmap_part1_hda, 
+                  m1,
                   select = row.names(ttmap_part1_hda$Dc.Dmat), 
                   ddd, 
                   e,
@@ -193,25 +194,14 @@ ttmap <- function(ttmap_part1_hda, m1,
     q1_high <- q_high[lapply(q_high, length) > 0]
     size_high <- lapply(q1_high, length)
     
-    # open the rgl 3d function if one wants to plot 
-    if (plot_graph == 1) {
-        open3d()
-    }
-    squize <- function(q1_all, m1, size_all, n = n){
+   squize <- function(q1_all, m1, size_all, n = n){
         r_all <- create_colors(q1_all, m1, size_all)
         sort_r <- sort(r_all$average, index.return = TRUE)
         size_all <- size_all[sort_r$ix]
         q1_all <- q1_all[sort_r$ix]
         q1_all_a <- annot(q1_all, n = n)
         f_all <- create_places(size_all)
-        if (plot_graph == 1){
-            r_all$col <- r_all$col[sort_r$ix]
-            out1 <- list(r = r_all, s = size_all,
-            f = f_all, q1_all = q1_all, q1_all_a = q1_all_a)
-        }
-        else {
-            out1 <- list(f = f_all, q1_all = q1_all)
-        }
+        out1 <- list(f = f_all, q1_all = q1_all)
         return(out1)
     }
     p <- squize(q1_all, m1, size_all, n = n)

@@ -13,16 +13,17 @@ simple_ttmap <- function( dataset,
                         ){
 
     # define the experiment matrix. First we separate the control group to the rest
+    names(dataset) <- make.names(names(dataset))
     name_samples = colnames(dataset)
+    test_samples <- unlist(test_samples)
     ctrl_indices = grep("ctrl", tolower(name_samples))
     
     if (length(test_samples) == 0){
         test_indices = setdiff(seq_len(length(name_samples)), ctrl_indices)
     }
     else {
-        test_indices = grep(paste(tolower(test_samples), sep = "|"), tolower(name_samples))    
+        test_indices = grep(paste(test_samples, sep = "|"), name_samples)
     }
-
     # create experiment matrix
     experiment <- make_matrices(dataset, 
                                 ctrl_indices, 
@@ -78,6 +79,8 @@ simple_ttmap <- function( dataset,
                                 output_directory = output_directory
                 )
 
+    ttmap_hda_deviations <- data.frame(samples = names(ttmap_hda$m), total_absolute_deviation = ttmap_hda$m)
+
     # annotation file for plotting ttmap
     annot <- c(paste(colnames(experiment$TEST[,-seq_len(3)]), "Dis", sep="."),
                paste(colnames(experiment$CTRL[,-seq_len(3)]), "Dis", sep="."))
@@ -129,7 +132,8 @@ simple_ttmap <- function( dataset,
     ttmap_all_results <- list(ttmap_ctrl   = ttmap_ctrl_adjm, 
                               ttmap_hda    = ttmap_hda,
                               ttmap_gtlmap = ttmap_gtlmap,
-                              samples_name = name_samples_test 
+                              samples_name = name_samples_test,
+                              absolute_deviations = ttmap_hda_deviations
                              ) 
 
     return(ttmap_all_results) 
